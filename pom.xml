@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.flipkart.falcon</groupId>
+    <artifactId>falcon</artifactId>
+    <packaging>jar</packaging>
+    <version>1.2-SNAPSHOT</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.couchbase.client</groupId>
+            <artifactId>java-client</artifactId>
+            <version>2.5.1</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+
+    <!-- Fetch from these repos-->
+
+    <repositories>
+        <repository>
+            <id>fk-art-snapshot</id>
+            <name>Flipkart-Artifactory</name>
+            <url>http://10.85.59.116/artifactory/v1.0/artifacts/libs-snapshots-local</url>
+        </repository>
+        <repository>
+            <id>fk-art-release</id>
+            <name>Flipkart-Artifactory</name>
+            <url>http://10.85.59.116/artifactory/v1.0/artifacts/libs-release-local</url>
+        </repository>
+    </repositories>
+
+    <!-- Publish to these repos-->
+    <distributionManagement>
+        <snapshotRepository>
+            <id>fk-art-snapshot</id>
+            <name>libs-snapshot</name>
+            <url>http://10.85.59.116/artifactory/v1.0/artifacts/libs-snapshots-local</url>
+        </snapshotRepository>
+        <repository>
+            <id>fk-art-release</id>
+            <name>libs-rel</name>
+            <url>http://10.85.59.116/artifactory/v1.0/artifacts/libs-release-local</url>
+        </repository>
+    </distributionManagement>
+
+</project>
