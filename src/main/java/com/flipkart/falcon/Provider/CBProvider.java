@@ -1,6 +1,7 @@
 package com.flipkart.falcon.Provider;
 
 import com.couchbase.client.deps.com.fasterxml.jackson.core.type.TypeReference;
+import com.couchbase.client.deps.com.fasterxml.jackson.databind.DeserializationFeature;
 import com.couchbase.client.deps.com.fasterxml.jackson.databind.ObjectMapper;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.CouchbaseCluster;
@@ -8,11 +9,12 @@ import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.json.JsonObject;
 import com.couchbase.client.java.transcoder.JsonTranscoder;
 import com.flipkart.falcon.client.Value;
-import com.flipkart.falcon.schema.StringCacheKeyImpl;
 import com.flipkart.falcon.schema.CacheKey;
+import com.flipkart.falcon.schema.StringCacheKeyImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by pradeep.joshi on 09/10/17.
@@ -23,6 +25,8 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
     static JsonTranscoder transcoder = new JsonTranscoder();
     static CouchbaseCluster cluster;
     static Bucket bucket;
+
+    private static final Logger LOG = LoggerFactory.getLogger(CBProvider.class) ;
 
     public static void setConfigurations() {
         // Create a cluster reference
@@ -72,6 +76,7 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
 
     public CBProvider(){
         setConfigurations();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     public static CBProvider<StringCacheKeyImpl, Value> getInstance() {
@@ -85,7 +90,8 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
             valueDocument = bucket.get(key.getString());
 
         } catch (Exception ex) {
-            System.out.println("Exception while fetching data from bucket for key : " + key + " Exception : " + ex.getMessage());
+            //System.out.println("Exception while fetching data from bucket for key : " + key + " Exception : " + ex.getMessage());
+            LOG.error("Exception while fetching data from bucket for key : " + key + " Exception : " + ex.getMessage());
             ex.printStackTrace();
         }
 
@@ -95,12 +101,16 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
         return value;
     }
 
-    public void put(K key, Value<V> value, long ttl) {
+    public void put(K key, Value<V> value, int ttl) {
         try {
-            JsonDocument inserted = bucket.upsert(JsonDocument.create(key.getString(), convertToJsonObject(value)),ttl, TimeUnit.MILLISECONDS);
-            System.out.println("Successfully inserted "+inserted.id());
+            //System.out.println("inserting... ");
+            LOG.info("inserting... ");
+            JsonDocument inserted = bucket.upsert(JsonDocument.create(key.getString(), ttl,convertToJsonObject(value)));
+            //System.out.println("Successfully inserted "+inserted.id());
+            LOG.info("Successfully inserted "+inserted.id());
         } catch (Exception ex) {
-            System.out.println("Exception while fetching data from bucket for key : " + key + " Exception : " + ex.getMessage());
+            //System.out.println("Exception while updating data from bucket for key : " + key + " Exception : " + ex.getMessage());
+            LOG.error("Exception while updating data from bucket for key : " + key + " Exception : " + ex.getMessage());
             ex.printStackTrace();
         }
 
@@ -115,6 +125,7 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
 
         } catch (Exception e) {
             e.printStackTrace();
+            LOG.error("Exception while converting to jsonObject by transcoder...");
         }
         return response;
 
@@ -128,6 +139,7 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
             value = objectMapper.readValue(jsonObject.toString(), new TypeReference<Value<V>>() {
             });
         } catch (IOException e) {
+            LOG.error("Exception while converting to Value by objectMapper...");
             e.printStackTrace();
         }
         //value = objectMapper.convertValue(jsonObject, new TypeReference<Value>() {});

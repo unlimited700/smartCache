@@ -1,52 +1,110 @@
 package com.flipkart.falcon.client;
 
+import com.couchbase.client.deps.com.fasterxml.jackson.databind.DeserializationFeature;
 import com.couchbase.client.deps.com.fasterxml.jackson.databind.ObjectMapper;
-import com.flipkart.falcon.Provider.BackendServiceProvider;
-import com.flipkart.falcon.Provider.CBProvider;
-import com.flipkart.falcon.Provider.DBProvider;
-import com.flipkart.falcon.Provider.RefreshStrategyProvider;
+import com.flipkart.falcon.Provider.*;
 import com.flipkart.falcon.schema.CacheKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Calendar;
 
 /**
  * Created by pradeep.joshi on 09/10/17.
  */
-public class CacheClientImpl<K, V> implements CacheClient<K, V> {
+public class CacheClientImpl<K extends CacheKey, V> implements CacheClient<K, V> {
 
     static ObjectMapper objectMapper = new ObjectMapper();
-    DBProvider<K,V> dbProvider;
+    DBProvider<K, V> dbProvider;
     BackendServiceProvider<V> backendServiceProvider;
     RefreshStrategyProvider refreshStrategyProvider;
-    long ttl ;
+    int ttl;
+
+    private static final Logger LOG = LoggerFactory.getLogger(CacheClientImpl.class) ;
 
     public V get(K key) {
-        V backendServiceResponse = null;
-        Value<V> cacheValue =  dbProvider.get(key);
+        Value<V> cacheValueFromDB = dbProvider.get(key);
+        Value<V> value = new Value<V>();
+        V backendServiceResponse;
 
-        if (null == cacheValue) {
+        LOG.info("get for key:" + key.getString());
+        if (null == cacheValueFromDB) {
+            long initTime = Calendar.getInstance().getTimeInMillis();
+            //todo : discuss to have this execute part of client or application...
             backendServiceResponse = backendServiceProvider.execute();
-            cacheValue = getCacheValue(backendServiceResponse);
-            dbProvider.put(key, cacheValue,ttl);//sync or async...?
+            long finishTime = Calendar.getInstance().getTimeInMillis();
+            System.out.println("Cache miss...");
+            LOG.info("Cache miss...");
+            new FetchAndSet(() -> {
+                value.setResponse(backendServiceResponse);
+                MetaValue metaValue = new MetaValue();
+                value.setMetaValue(metaValue);
+
+                processMetaDataAndInsertInDB(key, value, finishTime - initTime);
+                return null;
+            }).queue();
+
         } else {
+            key.setCacheHit(true);
+            value.setMetaValue(cacheValueFromDB.getMetaValue());
+            backendServiceResponse = (V) objectMapper.convertValue(cacheValueFromDB.getResponse(), backendServiceProvider.getResponseType());
+            System.out.println("Cache hit...");
+            LOG.info("Cache hit...");
 
-            if (refreshStrategyProvider.shouldRefresh()) {// do async...
-                backendServiceResponse = backendServiceProvider.execute();
-                cacheValue = getCacheValue(backendServiceResponse);
-
-                dbProvider.put(key, cacheValue,ttl);
+            if (null != value && refreshStrategyProvider.shouldRefresh(value.getMetaValue())) {
+                key.setAsyncRefresh(true);
+                new FetchAndSet(() -> {
+                    getFromBackendProcessMetaDataAndInsertInDB(key, value);
+                    return null;
+                }).queue();
             }
+
         }
-        backendServiceResponse = (V) objectMapper.convertValue(cacheValue.getResponse(),backendServiceProvider.getResponseType()) ;
+
         return backendServiceResponse;
     }
 
-    public Value<V> getCacheValue(V backendServiceResponse) {
-        Value cacheValue = new Value<V>();
-        MetaValue metaValue = new MetaValue();
-        metaValue.setDelta(1.3);
-        cacheValue.setResponse(backendServiceResponse);
-        cacheValue.setMetaValue(metaValue);
-        return cacheValue;
+    public void processMetaData(MetaValue metaValue, long reComputationTime) {//process MetaData and format value db compatible
+        //System.out.println("processing metadata...");
+        LOG.info("processing metadata...");
+
+        if (null != metaValue) {
+            metaValue.setDelta(reComputationTime);//todo : compute 99th percentile of reComputation time...
+            metaValue.setExpiryTime(Calendar.getInstance().getTimeInMillis() + ttl*1000);
+        }
+        //System.out.println("processed metadata...");
+        LOG.info("processed metadata...");
     }
+
+    private void processMetaDataAndInsertInDB(K key, Value<V> value, long reComputationTime) {
+        //System.out.println("inside processMetaDataAndInsertInDB");
+        LOG.info("inside processMetaDataAndInsertInDB");
+
+        if (null != value) {
+            processMetaData(value.getMetaValue(), reComputationTime);
+            //System.out.println("current recomputation time : " + reComputationTime);
+            LOG.info("current recomputation time : " + reComputationTime);
+            dbProvider.put(key, value, ttl);
+        } else {
+            //System.out.println("Exception!!! received value is null");
+            LOG.info("Exception!!! received value is null");
+        }
+
+    }
+
+    private void getFromBackendProcessMetaDataAndInsertInDB(K key, Value<V> value) {
+        //System.out.println("inside getFromBackendProcessMetaDataAndInsertInDB");
+        LOG.info("inside getFromBackendProcessMetaDataAndInsertInDB");
+        //todo : acquire lock on key and  decide what other simultaneous requests for same key will do...
+        long initTime = Calendar.getInstance().getTimeInMillis();
+        V backendServiceResponse = backendServiceProvider.execute();
+        long finishTime = Calendar.getInstance().getTimeInMillis();
+        value.setResponse(backendServiceResponse);
+        processMetaDataAndInsertInDB(key, value, finishTime - initTime);
+
+
+    }
+
 
     public V convertToValue(Object jsonObject, Class type) {
 
@@ -60,7 +118,7 @@ public class CacheClientImpl<K, V> implements CacheClient<K, V> {
     }
 
     public void put(K key, V value) {
-        dbProvider.put(key, new Value(value, new MetaValue()),ttl);//sync or async...?
+        dbProvider.put(key, new Value(value, new MetaValue()), ttl);//sync or async...?
     }
 
     public void invalidate(K key) {
@@ -70,14 +128,14 @@ public class CacheClientImpl<K, V> implements CacheClient<K, V> {
         this.dbProvider = cacheBuilder.dbProvider;
         this.backendServiceProvider = cacheBuilder.backendServiceProvider;
         this.refreshStrategyProvider = cacheBuilder.refreshStrategyProvider;
-        this.ttl = cacheBuilder.ttl ;
+        this.ttl = cacheBuilder.ttl;
     }
 
     public static class CacheBuilder<K extends CacheKey, V> {
-        DBProvider dbProvider = new CBProvider<K, V>();
+        DBProvider dbProvider  = new CBProvider<K, V>();
         BackendServiceProvider backendServiceProvider;
-        RefreshStrategyProvider refreshStrategyProvider;
-        long ttl = 900000 ;
+        RefreshStrategyProvider refreshStrategyProvider = new ProbabilisticRefreshStrategyProvider(1);
+        int ttl = 900 ;
 
         public CacheBuilder() {
         }
@@ -97,12 +155,14 @@ public class CacheClientImpl<K, V> implements CacheClient<K, V> {
             return this;
         }
 
-        public CacheBuilder<K, V> setTtl(long ttl) {
+        public CacheBuilder<K, V> setTtl(int ttl) {
             this.ttl = ttl;
-            return  this ;
+            return this;
         }
 
         public CacheClientImpl<K, V> build() {
+
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             return new CacheClientImpl(this);
         }
     }

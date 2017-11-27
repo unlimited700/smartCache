@@ -10,7 +10,7 @@ public class RedisProvider<K,V> implements DBProvider<K,V> {
         return null;
     }
 
-    public void put(K key, Value<V> value,long ttl) {
+    public void put(K key, Value<V> value,int ttl) {
 
     }
 

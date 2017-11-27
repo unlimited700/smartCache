@@ -12,6 +12,8 @@ import java.util.Map;
 public class POJOCacheKeyImpl implements CacheKey<Map> {
 
     private final HashMap data;
+    private boolean cacheHit = false ;
+    private boolean asyncRefresh = false ;
 
     public POJOCacheKeyImpl(HashMap<String, String> data) {
         this.data = data;
@@ -26,6 +28,23 @@ public class POJOCacheKeyImpl implements CacheKey<Map> {
     public String getString() {
         return data.toString();
     }
+
+
+    public boolean isCacheHit() {
+        return cacheHit;
+    }
+
+    @Override
+    public void setCacheHit(boolean cacheHit) {
+        this.cacheHit = cacheHit;
+    }
+
+    @Override
+    public boolean isAsyncRefresh() { return asyncRefresh ;}
+
+    @Override
+    public void setAsyncRefresh(boolean status) { this.asyncRefresh = status ;}
+
 
     public static void main(String[] args) {
         CBProvider<StringCacheKeyImpl, String> cbProvider = new CBProvider<>();

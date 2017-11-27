@@ -5,5 +5,6 @@ package com.flipkart.falcon.Provider;
  */
 public interface BackendServiceProvider<V> {
     V execute() ;
+    V queue() ;
     Class getResponseType() ;
 }

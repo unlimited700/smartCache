@@ -8,6 +8,6 @@ import com.flipkart.falcon.client.Value;
  */
 public interface DBProvider<K,V> {
     Value<V> get(K key) ;
-    void put(K key,Value<V> value,long ttl) ;
+    void put(K key,Value<V> value,int ttl) ;
     void invalidate(K key) ;
 }

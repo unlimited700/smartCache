@@ -6,9 +6,20 @@ package com.flipkart.falcon.schema;
 public class StringCacheKeyImpl implements CacheKey<String> {
 
     private final String data;
+    private boolean cacheHit = false ;
+    private boolean asyncRefresh = false ;
 
     public StringCacheKeyImpl(String data) {
         this.data = data;
+    }
+
+    public boolean isCacheHit() {
+        return cacheHit;
+    }
+
+    @Override
+    public void setCacheHit(boolean status) {
+        this.cacheHit = status;
     }
 
     @Override
@@ -20,4 +31,10 @@ public class StringCacheKeyImpl implements CacheKey<String> {
     public String getString() {
         return data;
     }
+
+    @Override
+    public boolean isAsyncRefresh() { return asyncRefresh ;}
+
+    @Override
+    public void setAsyncRefresh(boolean status) { this.asyncRefresh = status ;}
 }

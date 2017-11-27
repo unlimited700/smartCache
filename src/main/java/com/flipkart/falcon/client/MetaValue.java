@@ -4,21 +4,30 @@ package com.flipkart.falcon.client;
  * Created by pradeep.joshi on 03/11/17.
  */
 public class MetaValue {
-    Double delta ;
+    long delta = 0 ;
+    long expiryTime ;
 
     public MetaValue(){
         //this.delta = delta;
     }
 
-    public MetaValue(Double delta){
+    public MetaValue(long delta){
         this.delta = delta;
     }
 
-    public Double getDelta() {
+    public long getDelta() {
         return delta;
     }
 
-    public void setDelta(Double delta) {
+    public void setDelta(long delta) {
         this.delta = delta;
+    }
+
+    public long getExpiryTime() {
+        return expiryTime;
+    }
+
+    public void setExpiryTime(long expiryTime) {
+        this.expiryTime = expiryTime;
     }
 }

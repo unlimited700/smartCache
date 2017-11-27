@@ -1,5 +1,7 @@
 package com.flipkart.falcon.Provider;
 
+import com.couchbase.client.deps.com.fasterxml.jackson.core.JsonProcessingException;
+import com.couchbase.client.deps.com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.falcon.schema.StringCacheKeyImpl;
 import com.flipkart.falcon.client.CacheClientImpl;
 import com.flipkart.falcon.client.MetaValue;
@@ -15,16 +17,26 @@ public class Test {
     }
 
     public static void main(String[] args)  {
-        MetaValue metaValue = new MetaValue();
-        metaValue.setDelta(0.3);
+        MetaValue metaValue  ;
+
         CacheClientImpl<StringCacheKeyImpl, MetaValue> build = new CacheClientImpl.CacheBuilder<StringCacheKeyImpl, MetaValue>().
-                backendServiceProvider(AggregatorServiceProvider.getInstance()).
-                refreshStrategyProvider(ProbablisticRefreshStrategyProvider.getInstance()).
+                backendServiceProvider(new AggregatorServiceProvider()).
+                refreshStrategyProvider(new ProbabilisticRefreshStrategyProvider(1)).
                 build();
 
-        StringCacheKeyImpl key3 = new StringCacheKeyImpl("key3") ;
+        StringCacheKeyImpl key3 = new StringCacheKeyImpl("key133") ;
 
-        MetaValue resp = build.get(key3);
-        System.out.println("reComputation time : " + resp.getDelta());
+        Object resp = build.get(key3);
+        try {
+            System.out.println("reComputation time : " + new ObjectMapper().writeValueAsString(resp.toString()));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
