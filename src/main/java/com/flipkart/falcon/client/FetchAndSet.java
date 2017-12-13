@@ -15,20 +15,22 @@ public class FetchAndSet extends HystrixCommand<Object> {
     private Supplier<Object> supplier;
 
     protected FetchAndSet(Supplier<Object> supplier) {
-        super(Setter
-                .withGroupKey(HystrixCommandGroupKey.Factory.asKey(COMMAND ))
-                .andCommandKey(HystrixCommandKey.Factory.asKey(COMMAND ))
+
+        super(Setter.withGroupKey(
+                HystrixCommandGroupKey.Factory.asKey(COMMAND + POOL))
+                .andCommandKey(HystrixCommandKey.Factory.asKey(COMMAND + POOL))
                 .andCommandPropertiesDefaults(
                         HystrixCommandProperties.Setter()
-                                .withCircuitBreakerEnabled(true)
-                                .withFallbackEnabled(false)
-                                .withExecutionTimeoutInMilliseconds(140000)
+                                .withCircuitBreakerEnabled(false)
+                                .withFallbackEnabled(true)
+                                .withExecutionTimeoutInMilliseconds(2800)
+                                .withFallbackIsolationSemaphoreMaxConcurrentRequests(Integer.MAX_VALUE)
                                 .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD))
                 .andThreadPoolKey(
-                        HystrixThreadPoolKey.Factory.asKey(COMMAND ))
+                        HystrixThreadPoolKey.Factory.asKey(COMMAND  + POOL))
                 .andThreadPoolPropertiesDefaults(
                         HystrixThreadPoolProperties.Setter()
-                                .withCoreSize(100)));
+                                .withCoreSize(400)));
         this.supplier = supplier;
     }
 

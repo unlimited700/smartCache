@@ -8,6 +8,7 @@ import com.couchbase.client.java.CouchbaseCluster;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.json.JsonObject;
 import com.couchbase.client.java.transcoder.JsonTranscoder;
+import com.couchbase.client.java.util.DigestUtils;
 import com.flipkart.falcon.client.Value;
 import com.flipkart.falcon.schema.CacheKey;
 import com.flipkart.falcon.schema.StringCacheKeyImpl;
@@ -87,7 +88,7 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
     public Value<V> get(K key) {
         JsonDocument valueDocument = null;
         try {
-            valueDocument = bucket.get(key.getString());
+            valueDocument = bucket.get(getCacheKey(key.getString()));
 
         } catch (Exception ex) {
             //System.out.println("Exception while fetching data from bucket for key : " + key + " Exception : " + ex.getMessage());
@@ -105,7 +106,7 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
         try {
             //System.out.println("inserting... ");
             LOG.info("inserting... ");
-            JsonDocument inserted = bucket.upsert(JsonDocument.create(key.getString(), ttl,convertToJsonObject(value)));
+            JsonDocument inserted = bucket.upsert(JsonDocument.create(getCacheKey(key.getString()), ttl,convertToJsonObject(value)));
             //System.out.println("Successfully inserted "+inserted.id());
             LOG.info("Successfully inserted "+inserted.id());
         } catch (Exception ex) {
@@ -114,6 +115,13 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
             ex.printStackTrace();
         }
 
+    }
+
+    public static String getCacheKey(String uri){
+        if(uri==null){
+            return null;
+        }
+        return DigestUtils.digestSha1Hex(uri) ;
     }
 
     public JsonObject convertToJsonObject(Value<V> object) {
