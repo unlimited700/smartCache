@@ -21,7 +21,7 @@ public class Test {
 
         CacheClientImpl<StringCacheKeyImpl, MetaValue> build = new CacheClientImpl.CacheBuilder<StringCacheKeyImpl, MetaValue>().
                 backendServiceProvider(new AggregatorServiceProvider()).
-                refreshStrategyProvider(new ProbabilisticRefreshStrategyProvider(1)).
+                refreshStrategyProvider(new ProbabilisticRefreshStrategyProvider(1,60000)).dbProvider(CBProvider.getInstance("falcon")).
                 build();
 
         StringCacheKeyImpl key3 = new StringCacheKeyImpl("key133") ;
@@ -35,6 +35,10 @@ public class Test {
 
         try {
             Thread.sleep(5000);
+            build = new CacheClientImpl.CacheBuilder<StringCacheKeyImpl, MetaValue>().
+                    backendServiceProvider(new AggregatorServiceProvider()).
+                    refreshStrategyProvider(new ProbabilisticRefreshStrategyProvider(1,60000)).dbProvider(CBProvider.getInstance("falcon")).
+                    ttl(900).build();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

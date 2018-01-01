@@ -83,7 +83,7 @@ public class CacheClientImpl<K extends CacheKey, V> implements CacheClient<K, V>
         if (null != value) {
             processMetaData(value.getMetaValue(), reComputationTime);
             //System.out.println("current recomputation time : " + reComputationTime);
-            LOG.info("current recomputation time : " + reComputationTime);
+            LOG.info("current recomputation time : " + reComputationTime + ", ttl : " + ttl);
             dbProvider.put(key, value, ttl);
         } else {
             //System.out.println("Exception!!! received value is null");
@@ -132,9 +132,9 @@ public class CacheClientImpl<K extends CacheKey, V> implements CacheClient<K, V>
     }
 
     public static class CacheBuilder<K extends CacheKey, V> {
-        DBProvider dbProvider  = new CBProvider<K, V>();
+        DBProvider dbProvider  = CBProvider.getInstance("default");
         BackendServiceProvider backendServiceProvider;
-        RefreshStrategyProvider refreshStrategyProvider = new ProbabilisticRefreshStrategyProvider(1);
+        RefreshStrategyProvider refreshStrategyProvider = new ProbabilisticRefreshStrategyProvider(1,60000);
         int ttl = 900 ;
 
         public CacheBuilder() {
@@ -155,7 +155,7 @@ public class CacheClientImpl<K extends CacheKey, V> implements CacheClient<K, V>
             return this;
         }
 
-        public CacheBuilder<K, V> setTtl(int ttl) {
+        public CacheBuilder<K, V> ttl(int ttl) {
             this.ttl = ttl;
             return this;
         }

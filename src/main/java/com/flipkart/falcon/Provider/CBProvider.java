@@ -11,11 +11,12 @@ import com.couchbase.client.java.transcoder.JsonTranscoder;
 import com.couchbase.client.java.util.DigestUtils;
 import com.flipkart.falcon.client.Value;
 import com.flipkart.falcon.schema.CacheKey;
-import com.flipkart.falcon.schema.StringCacheKeyImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by pradeep.joshi on 09/10/17.
@@ -23,20 +24,21 @@ import java.io.IOException;
 public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
 
     static ObjectMapper objectMapper = new ObjectMapper();
+    static Map<String,DBProvider> store = new HashMap<String,DBProvider>();
     static JsonTranscoder transcoder = new JsonTranscoder();
-    static CouchbaseCluster cluster;
-    static Bucket bucket;
+    private CouchbaseCluster cluster;
+    private Bucket bucket;
 
     private static final Logger LOG = LoggerFactory.getLogger(CBProvider.class) ;
 
-    public static void setConfigurations() {
+    public void setConfigurations(String bucketName) {
         // Create a cluster reference
         cluster = CouchbaseCluster.create("10.33.217.224", "10.32.85.207", "10.32.189.201", "10.33.237.4");
 
         cluster.authenticate("Administrator", "sherlock");
 
         // Connect to the bucket and open it
-        bucket = cluster.openBucket("default");
+        this.bucket = cluster.openBucket(bucketName);
 /*
 
         // Create a JSON document and store it with the ID "helloworld"
@@ -71,18 +73,26 @@ public class CBProvider<K extends CacheKey, V> implements DBProvider<K, V> {
     }
 
 
-    public static void main(String[] args) {
-        setConfigurations();
+  /*  public static void main(String[] args) {
+        setConfigurations("default");
     }
-
-    public CBProvider(){
-        setConfigurations();
+*/
+    private CBProvider(String bucketName){
+        setConfigurations(bucketName);
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    public static CBProvider<StringCacheKeyImpl, Value> getInstance() {
-        setConfigurations();
-        return new CBProvider<StringCacheKeyImpl, Value>();
+    public static DBProvider getInstance(String bucketName){
+        DBProvider cbProvider = null ;
+        if( null != store && store.containsKey(bucketName) )
+            return store.get(bucketName) ;
+        else{
+            cbProvider = new CBProvider(bucketName) ;
+            store.put(bucketName,cbProvider) ;
+        }
+
+
+        return cbProvider ;
     }
 
     public Value<V> get(K key) {
