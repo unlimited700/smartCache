@@ -14,6 +14,7 @@
 /Users/pradeep.joshi/flipkart/falcon/src/main/java/com/flipkart/falcon/schema/POJOCacheKeyImpl.java
 /Users/pradeep.joshi/flipkart/falcon/src/main/java/com/flipkart/falcon/Provider/AggregatorServiceProvider.java
 /Users/pradeep.joshi/flipkart/falcon/src/main/java/com/flipkart/falcon/client/FetchAndSet.java
+/Users/pradeep.joshi/flipkart/falcon/src/main/java/com/flipkart/falcon/commons/MetricUtils.java
 /Users/pradeep.joshi/flipkart/falcon/src/main/java/com/flipkart/falcon/Provider/RedisProvider.java
 /Users/pradeep.joshi/flipkart/falcon/src/main/java/com/flipkart/falcon/Provider/CBProvider.java
 /Users/pradeep.joshi/flipkart/falcon/src/main/java/com/flipkart/falcon/client/CacheClientImpl.java

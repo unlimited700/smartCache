@@ -30,6 +30,12 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4jVersion}</version>
         </dependency>
+        <dependency>
+            <groupId>com.netflix.hystrix</groupId>
+            <artifactId>hystrix-yammer-metrics-publisher</artifactId>
+            <version>1.5.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>

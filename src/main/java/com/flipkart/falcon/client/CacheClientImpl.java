@@ -48,8 +48,9 @@ public class CacheClientImpl<K extends CacheKey, V> implements CacheClient<K, V>
             key.setCacheHit(true);
             value.setMetaValue(cacheValueFromDB.getMetaValue());
             backendServiceResponse = (V) objectMapper.convertValue(cacheValueFromDB.getResponse(), backendServiceProvider.getResponseType());
-            System.out.println("Cache hit...");
-            LOG.info("Cache hit...");
+            System.out.println("checking refreshing strategy for key:" + CBProvider.getCacheKey(key.getString()));
+            LOG.info("checking refreshing strategy for key:" + CBProvider.getCacheKey(key.getString()));
+
 
             if (null != value && refreshStrategyProvider.shouldRefresh(value.getMetaValue())) {
                 key.setAsyncRefresh(true);

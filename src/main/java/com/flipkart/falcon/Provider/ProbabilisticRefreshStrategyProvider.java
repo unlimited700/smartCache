@@ -1,6 +1,7 @@
 package com.flipkart.falcon.Provider;
 
 import com.flipkart.falcon.client.MetaValue;
+import com.flipkart.falcon.commons.MetricUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,14 +29,23 @@ public class ProbabilisticRefreshStrategyProvider implements RefreshStrategyProv
         this.gama = gama;
     }
 
-    public Boolean shouldRefresh(MetaValue metaValue) {
+    public boolean shouldRefresh(MetaValue metaValue) {
         if (null == metaValue) return false;
+        //todo: in future would like to store 99th percentile of delta
         metaValue.setDelta(metaValue.getDelta());
         long currentTime = Calendar.getInstance().getTimeInMillis();
         double random = Math.random() ;
         double logRandom = Math.log(0.0000000001 + random);
         long predictiveTime = currentTime - Double.valueOf(metaValue.getDelta() * beta * logRandom).longValue() + gama ;
-        Boolean status = (predictiveTime >= metaValue.getExpiryTime());
+        boolean status = (predictiveTime >= metaValue.getExpiryTime());
+
+        if( status ){
+            if( currentTime + gama >= metaValue.getExpiryTime() )
+                MetricUtils.getMeter(ProbabilisticRefreshStrategyProvider.class,"gama-async-refresh").mark();
+            else
+                MetricUtils.getMeter(ProbabilisticRefreshStrategyProvider.class,"beta-async-refresh").mark();
+        }
+
         System.out.println("status: " + status + ", curTime: " + currentTime + ", predictiveTime: " + predictiveTime + ", expiryTime: " + metaValue.getExpiryTime() + ", delta:" + metaValue.getDelta() + ", logRandom:" + logRandom + ", random:" + random + ", beta:"+beta + ", gama:"+gama);
         LOG.info("status: " + status + ", curTime: " + currentTime + ", predictiveTime: " + predictiveTime + ", expiryTime: " + metaValue.getExpiryTime() + ", delta:" + metaValue.getDelta() + ", logRandom:" + logRandom + ", random:" + random + ", beta:"+beta + ", gama:"+gama);
 
