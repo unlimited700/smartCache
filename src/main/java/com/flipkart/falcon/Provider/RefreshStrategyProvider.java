@@ -1,10 +1,11 @@
 package com.flipkart.falcon.Provider;
 
-import com.flipkart.falcon.client.MetaValue;
+import com.flipkart.falcon.models.MetaValue;
+import com.flipkart.falcon.models.RefreshStatus;
 
 /**
  * Created by pradeep.joshi on 09/10/17.
  */
 public interface RefreshStrategyProvider {
-    boolean shouldRefresh(MetaValue metaValue) ;
+    RefreshStatus shouldRefresh(MetaValue metaValue) ;
 }

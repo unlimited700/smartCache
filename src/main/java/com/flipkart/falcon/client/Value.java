@@ -1,5 +1,7 @@
 package com.flipkart.falcon.client;
 
+import com.flipkart.falcon.models.MetaValue;
+
 /**
  * Created by pradeep.joshi on 03/11/17.
  */

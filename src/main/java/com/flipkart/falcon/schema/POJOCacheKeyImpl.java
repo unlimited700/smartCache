@@ -1,9 +1,11 @@
 package com.flipkart.falcon.schema;
 
 import com.flipkart.falcon.Provider.CBProvider;
-import com.flipkart.falcon.Provider.DBProvider;
+import com.flipkart.falcon.Provider.CacheProvider;
 import com.flipkart.falcon.client.Value;
+import com.flipkart.falcon.models.CBConfig;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,10 +50,19 @@ public class POJOCacheKeyImpl implements CacheKey<Map> {
 
 
     public static void main(String[] args) {
-        DBProvider cbProvider = CBProvider.getInstance("default");
-        Value<String> value = new Value<String>() ;
-        value.setResponse("random cache value");
+
+        try {
+            CBConfig cbConfig = new CBConfig() ;
+            CacheProvider cbProvider = null;
+            cbProvider = new CBProvider(cbConfig,10000);
+            Value<String> value = new Value<String>() ;
+            value.setResponse("random cache value");
+            cbProvider.put(new StringCacheKeyImpl("random key"), value,900000);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     //    System.out.println(value.getResponse());
-        cbProvider.put(new StringCacheKeyImpl("random key"), value,900000);
+
     }
 }

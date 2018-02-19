@@ -1,7 +1,8 @@
 package com.flipkart.falcon.Provider;
 
-import com.flipkart.falcon.client.MetaValue;
 import com.flipkart.falcon.commons.MetricUtils;
+import com.flipkart.falcon.models.MetaValue;
+import com.flipkart.falcon.models.ProbabilisticRefreshStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,27 +30,27 @@ public class ProbabilisticRefreshStrategyProvider implements RefreshStrategyProv
         this.gama = gama;
     }
 
-    public boolean shouldRefresh(MetaValue metaValue) {
-        if (null == metaValue) return false;
+    public ProbabilisticRefreshStatus shouldRefresh(MetaValue metaValue) {
+        if (null == metaValue) return null;
         //todo: in future would like to store 99th percentile of delta
         metaValue.setDelta(metaValue.getDelta());
         long currentTime = Calendar.getInstance().getTimeInMillis();
         double random = Math.random() ;
         double logRandom = Math.log(0.0000000001 + random);
         long predictiveTime = currentTime - Double.valueOf(metaValue.getDelta() * beta * logRandom).longValue() + gama ;
-        boolean status = (predictiveTime >= metaValue.getExpiryTime());
+        boolean shouldRefresh = (predictiveTime >= metaValue.getExpiryTime());
+        boolean isGamaRefresh = (currentTime + gama >= metaValue.getExpiryTime()) ;
 
-        if( status ){
-            if( currentTime + gama >= metaValue.getExpiryTime() )
+        if( shouldRefresh ){
+            if( isGamaRefresh )
                 MetricUtils.getMeter(ProbabilisticRefreshStrategyProvider.class,"gama-async-refresh").mark();
             else
                 MetricUtils.getMeter(ProbabilisticRefreshStrategyProvider.class,"beta-async-refresh").mark();
         }
 
-        System.out.println("status: " + status + ", curTime: " + currentTime + ", predictiveTime: " + predictiveTime + ", expiryTime: " + metaValue.getExpiryTime() + ", delta:" + metaValue.getDelta() + ", logRandom:" + logRandom + ", random:" + random + ", beta:"+beta + ", gama:"+gama);
-        LOG.info("status: " + status + ", curTime: " + currentTime + ", predictiveTime: " + predictiveTime + ", expiryTime: " + metaValue.getExpiryTime() + ", delta:" + metaValue.getDelta() + ", logRandom:" + logRandom + ", random:" + random + ", beta:"+beta + ", gama:"+gama);
+        ProbabilisticRefreshStatus refreshStatus = new ProbabilisticRefreshStatus(shouldRefresh,currentTime, random, logRandom, predictiveTime, isGamaRefresh,beta,gama) ;
 
-        return status;
+        return refreshStatus;
     }
 
 }

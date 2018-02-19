@@ -1,6 +1,6 @@
 package com.flipkart.falcon.Provider;
 
-import com.flipkart.falcon.client.MetaValue;
+import com.flipkart.falcon.models.MetaValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
