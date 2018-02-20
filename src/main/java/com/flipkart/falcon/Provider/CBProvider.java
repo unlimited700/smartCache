@@ -24,7 +24,7 @@ import java.util.Set;
 /**
  * Created by pradeep.joshi on 13/02/18.
  */
-public class CBProvider <K extends CacheKey, V> implements CacheProvider<K, V> {
+public class CBProvider <K extends CacheKey, V > implements CacheProvider<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CBProvider.class) ;
     static ObjectMapper objectMapper = new ObjectMapper();
@@ -73,14 +73,14 @@ public class CBProvider <K extends CacheKey, V> implements CacheProvider<K, V> {
 
         if (null == response) return null;
 
-        Value<V> value = convertFromJsonObjectToValue(response);
+        Value<V> value = convertFromJsonObjectToValue(new String((byte [])response, StandardCharsets.UTF_8));
         return value;
     }
 
     public void put(K key, Value<V> value, int ttl) {
         try {
 
-            cacheClient.set(getCacheKey(key.getString()),ttl,value.toString().getBytes(StandardCharsets.UTF_8)) ;
+            cacheClient.set(getCacheKey(key.getString()),ttl,objectMapper.writeValueAsString(value).getBytes(StandardCharsets.UTF_8)) ;
 
         } catch (Exception ex) {
             LOG.error("Exception while updating data from bucket for key : " + key + " Exception : " + ex.getMessage());
@@ -96,11 +96,11 @@ public class CBProvider <K extends CacheKey, V> implements CacheProvider<K, V> {
         return DigestUtils.md5Hex(uri);
     }
 
-    public Value<V> convertFromJsonObjectToValue(Object object) {
+    public Value<V> convertFromJsonObjectToValue(String object) {
 
         Value<V> value = null;
         try {
-            value = objectMapper.readValue(object.toString(), new TypeReference<Value<V>>() {
+            value = objectMapper.readValue(object, new TypeReference<Value<V>>() {
             });
         } catch (IOException e) {
             LOG.error("Exception while converting to Value by objectMapper...");

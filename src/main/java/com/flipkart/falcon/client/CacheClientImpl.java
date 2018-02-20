@@ -27,7 +27,7 @@ public class CacheClientImpl<K extends CacheKey, V> implements CacheClient<K, V>
     private static final Logger LOG = LoggerFactory.getLogger(CacheClientImpl.class) ;
 
     public V get(K key) {
-        Value<V> cacheValueFromDB = cacheProvider.get(key);
+        Value<V> cacheValueFromDB = (Value<V>)new FetchAndSet(() -> { return cacheProvider.get(key); }).queue();
         Value<V> value = new Value<V>();
         V backendServiceResponse;
 

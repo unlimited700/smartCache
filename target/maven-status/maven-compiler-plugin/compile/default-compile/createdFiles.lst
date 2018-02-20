@@ -29,4 +29,5 @@ com/flipkart/falcon/Provider/LogAnalysis$ProbData.class
 com/flipkart/falcon/Provider/LogAnalysis$CacheKeyStatus.class
 com/flipkart/falcon/models/MetaValue.class
 com/flipkart/falcon/schema/POJOCacheKeyImpl.class
+com/flipkart/falcon/schema/CacheResponse.class
 com/flipkart/falcon/Provider/ProbabilisticRefreshStrategyProvider.class
