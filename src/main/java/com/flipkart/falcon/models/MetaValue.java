@@ -1,5 +1,7 @@
 package com.flipkart.falcon.models;
 
+import java.util.Calendar;
+
 /**
  * Created by pradeep.joshi on 03/11/17.
  */
@@ -7,9 +9,11 @@ public class MetaValue {
     long delta = 0 ;
     long expiryTime ;
 
-    public MetaValue(){
-        //this.delta = delta;
+    public MetaValue(int ttl){
+        this.expiryTime = Calendar.getInstance().getTimeInMillis() + ttl*1000 ;
     }
+
+    public MetaValue(){}
 
     public MetaValue(long delta){
         this.delta = delta;

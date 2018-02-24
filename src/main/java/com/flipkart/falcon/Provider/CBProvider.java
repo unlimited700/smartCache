@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.falcon.client.Value;
 import com.flipkart.falcon.models.CBConfig;
-import com.flipkart.falcon.schema.CacheKey;
+import com.flipkart.falcon.schema.StringCacheKeyImpl;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +17,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by pradeep.joshi on 13/02/18.
  */
-public class CBProvider <K extends CacheKey, V > implements CacheProvider<K, V> {
+public class CBProvider <K extends StringCacheKeyImpl, V > implements CacheProvider<K, V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CBProvider.class) ;
     static ObjectMapper objectMapper = new ObjectMapper();
@@ -112,5 +110,27 @@ public class CBProvider <K extends CacheKey, V > implements CacheProvider<K, V> 
 
     public void invalidate(K key) {
 
+    }
+
+    @Override
+    public Map<K, Value<V>> getBulk(Collection<K> keys) {
+        Map<K, Value<V>> response = new HashMap<K,Value<V>>() ;
+        Map<String,Object> cacheResponse = cacheClient.getBulk(getKeys(keys)) ;
+
+
+        for(Map.Entry<String,Object> entry : cacheResponse.entrySet()){
+            StringCacheKeyImpl key = new StringCacheKeyImpl(entry.getKey()) ;
+            response.put((K)key,convertFromJsonObjectToValue(new String((byte [])entry.getValue(), StandardCharsets.UTF_8))) ;
+        }
+
+        return response;
+    }
+
+    private Collection<String> getKeys(Collection<K> keys){
+        Collection<String> res = new ArrayList<String>() ;
+        for(K key : keys){
+            res.add(key.getString()) ;
+        }
+        return res ;
     }
 }

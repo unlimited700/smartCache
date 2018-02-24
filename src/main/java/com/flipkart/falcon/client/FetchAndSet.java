@@ -14,7 +14,7 @@ public class FetchAndSet extends HystrixCommand<Object> {
     /* supplier during run */
     private Supplier<Object> supplier;
 
-    protected FetchAndSet(Supplier<Object> supplier) {
+    protected FetchAndSet(Supplier<Object> supplier,int timeout,int threadPoolSize) {
 
         super(Setter.withGroupKey(
                 HystrixCommandGroupKey.Factory.asKey(COMMAND + POOL))
@@ -23,19 +23,24 @@ public class FetchAndSet extends HystrixCommand<Object> {
                         HystrixCommandProperties.Setter()
                                 .withCircuitBreakerEnabled(false)
                                 .withFallbackEnabled(true)
-                                .withExecutionTimeoutInMilliseconds(2800)
+                                .withExecutionTimeoutInMilliseconds(timeout)
                                 .withFallbackIsolationSemaphoreMaxConcurrentRequests(Integer.MAX_VALUE)
                                 .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.THREAD))
                 .andThreadPoolKey(
                         HystrixThreadPoolKey.Factory.asKey(COMMAND  + POOL))
                 .andThreadPoolPropertiesDefaults(
                         HystrixThreadPoolProperties.Setter()
-                                .withCoreSize(400)));
+                                .withCoreSize(threadPoolSize)));
         this.supplier = supplier;
     }
 
     @Override
     protected Object run() throws Exception {
         return supplier.get();
+    }
+
+    @Override
+    protected Object getFallback() {
+        return super.getFallback();
     }
 }

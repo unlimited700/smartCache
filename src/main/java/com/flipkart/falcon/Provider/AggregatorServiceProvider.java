@@ -14,14 +14,19 @@ public class AggregatorServiceProvider<T> implements BackendServiceProvider {
     public T execute() {
         //System.out.println("inside AggregatorServiceProvider execute...");
         LOG.info("inside AggregatorServiceProvider execute...");
-        MetaValue metaValue = new MetaValue();
+        MetaValue metaValue = new MetaValue(900);
         metaValue.setDelta(-1);
         return (T)metaValue;
     }
 
     @Override
+    public Object getFallback() {
+        return null;
+    }
+
+    @Override
     public T queue() {
-        MetaValue metaValue = new MetaValue();
+        MetaValue metaValue = new MetaValue(900);
         metaValue.setDelta(1);
         return (T)metaValue;
     }
