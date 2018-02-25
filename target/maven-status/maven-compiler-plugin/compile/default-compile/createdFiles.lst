@@ -1,5 +1,4 @@
 com/flipkart/falcon/Provider/BackendServiceProvider.class
-com/flipkart/falcon/client/TaskMaster.class
 com/flipkart/falcon/Provider/LogAnalysis.class
 com/flipkart/falcon/Provider/CBProvider.class
 com/flipkart/falcon/Provider/RedisProvider.class
